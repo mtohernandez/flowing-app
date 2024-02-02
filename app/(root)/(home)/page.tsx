@@ -5,26 +5,13 @@ import Filter from "@/components/shared/filter/Filter";
 import LocalSearchbar from "@/components/shared/search/LocalSearchbar";
 import { Button } from "@/components/ui/button";
 import { HomePageFilters } from "@/constants/filters";
+import { getQuestions } from "@/lib/actions/question.action";
 import Link from "next/link";
 
-const questions = [
-  {
-    _id: "1",
-    title: "How to use React Query?",
-    tags: [{ _id: "1", name: "React" }],
-    author: {
-      _id: "1",
-      username: "John",
-      avatar: "/assets/icons/avatar.svg",
-    },
-    upvoters: 500000,
-    views: 1500000,
-    answers: [],
-    createdAt: new Date(),
-  },
-];
+export default async function Home() {
 
-export default function Home() {
+  const result = await getQuestions({}); 
+
   return (
     <>
       <div className="flex w-full flex-col-reverse justify-between gap-4 sm:flex-row sm:items-center">
@@ -56,8 +43,8 @@ export default function Home() {
       <HomeFilters />
 
       <div className="mt-10 flex w-full flex-col gap-6">
-        {questions.length > 0 ? (
-          questions.map((question) => (
+        {result.length > 0 ? (
+          result.map((question) => (
             <QuestionCard
               key={question._id}
               _id={question._id}

@@ -1,16 +1,51 @@
 import QuestionCard from "@/components/cards/QuestionCard";
 import HomeFilters from "@/components/home/HomeFilters";
 import NoResult from "@/components/shared/NoResult";
+import Pagination from "@/components/shared/Pagination";
 import Filter from "@/components/shared/filter/Filter";
 import LocalSearchbar from "@/components/shared/search/LocalSearchbar";
 import { Button } from "@/components/ui/button";
 import { HomePageFilters } from "@/constants/filters";
-import { getQuestions } from "@/lib/actions/question.action";
+import {
+  getQuestions,
+  getRecommendedQuestions,
+} from "@/lib/actions/question.action";
+import { SearchParamsProps } from "@/types";
 import Link from "next/link";
+import type { Metadata } from "next";
+import { auth } from "@clerk/nextjs";
 
-export default async function Home() {
+export const metadata: Metadata = {
+  title: "Home | Meta Mind",
+  description:
+    "Meta Mind is a platform for asking questions and sharing knowledge.",
+};
 
-  const result = await getQuestions({}); 
+export default async function Home({ searchParams }: SearchParamsProps) {
+  const { userId } = auth();
+
+  let result;
+
+  if (searchParams?.filter === "recommended") {
+    if (userId) {
+      result = await getRecommendedQuestions({
+        userId,
+        searchQuery: searchParams?.search,
+        page: searchParams?.page ? +searchParams.page : 1,
+      });
+    } else {
+      result = {
+        questions: [],
+        isNext: false,
+      };
+    }
+  } else {
+    result = await getQuestions({
+      searchQuery: searchParams?.search,
+      filter: searchParams?.filter,
+      page: searchParams?.page ? +searchParams.page : 1,
+    });
+  }
 
   return (
     <>
@@ -43,15 +78,15 @@ export default async function Home() {
       <HomeFilters />
 
       <div className="mt-10 flex w-full flex-col gap-6">
-        {result.length > 0 ? (
-          result.map((question) => (
+        {result.questions.length > 0 ? (
+          result.questions.map((question) => (
             <QuestionCard
               key={question._id}
               _id={question._id}
               title={question.title}
               tags={question.tags}
               author={question.author}
-              upvoters={question.upvoters}
+              upvotes={question.upvotes}
               views={question.views}
               answers={question.answers}
               createdAt={question.createdAt}
@@ -65,6 +100,12 @@ export default async function Home() {
             linkText="Ask a Question"
           />
         )}
+      </div>
+      <div className="mt-10">
+        <Pagination
+          pageNumber={searchParams?.page ? +searchParams.page : 1}
+          isNext={result.isNext}
+        />
       </div>
     </>
   );
